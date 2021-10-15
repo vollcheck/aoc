@@ -1,0 +1,2 @@
+- [ ] allow to use `load_input` from `utils` module
+- [ ] create `make_day_dir` command
