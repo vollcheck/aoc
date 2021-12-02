@@ -29,16 +29,6 @@
         "down" (task1 (rest coll) horizontal (+ vertical value))
         "up" (task1 (rest coll) horizontal (- vertical value))))))
 
-;; Does anybody know why it doesn't work?
-;; (defn task1 [coll]
-;;   (reduce
-;;    (fn [horizontal vertical [instr value]]
-;;      (case instr
-;;        "forward" (+ horizontal value)
-;;        "down" (+ vertical value)
-;;        "up" (- vertical value)))
-;;    0 0 coll))
-
 (defn task2 [coll aim horizontal depth]
   (if (empty? coll)
     (* horizontal depth)
@@ -52,5 +42,4 @@
 
 (comment
   (print (task1 input 0 0))
-  (print (task2 input 0 0 0))
-  )
+  (print (task2 input 0 0 0)))
