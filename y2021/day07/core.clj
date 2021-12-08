@@ -36,7 +36,8 @@
      0 coll)))
 
 (defn move [end]
-  (/ (* end (+ end 1)) 2))
+  (/ (* end (inc end)) 2))
+
 
 (defn fuel-cost [crab position]
   (move (Math/abs (- crab position))))
@@ -47,4 +48,4 @@
            (reduce + (map #(fuel-cost % position) coll)))))
 
 (println (count-fuel (load-input "input.txt")))
-(println (count-fuel2 (load-input "input.txt")))
+(time (println (count-fuel2 (load-input "input.txt"))))
