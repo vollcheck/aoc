@@ -19,9 +19,7 @@
         left   (get (get board y) (dec x))
         right  (get (get board y) (inc x))
         points (filterv identity [point up down left right])]
-    (= point (apply min points))))
-
-(def tubes (atom []))
+    (and (= point (apply min points)) (< point 9))))
 
 (defn find-neighbors [board]
   (let [width (count (first board))
@@ -35,7 +33,10 @@
   (reduce
    (fn [cnt coll]
      (+ cnt (inc coll)))
-   @tubes))
+   0 @tubes))
+
+(def tubes (atom []))
 
 (find-neighbors (load-input "input.txt"))
+@tubes
 (println (sum-tubes tubes))
