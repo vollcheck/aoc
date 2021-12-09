@@ -12,31 +12,57 @@
        (str/split-lines)
        (mapv parse-line)))
 
-(defn tube? [board x y]
-  (let [point  (get (get board y) x)
-        up     (get (get board (dec y)) x)
-        down   (get (get board (inc y)) x)
-        left   (get (get board y) (dec x))
-        right  (get (get board y) (inc x))
-        points (filterv identity [point up down left right])]
-    (and (= point (apply min points)) (< point 9))))
+(defn create-land
+  "Creates a list of vectors of points."
+  [board]
+  (let [h (count board)
+        w (count (first board))]
+    (for [y (range h)]
+      (mapv #(vec [% y]) (range w)))))
 
-(defn find-neighbors [board]
+(defn g [b x y]
+  (get (get b y) x))
+
+(defn tube? [board x y]
+  (let [point  (g board x y)
+        up     (g board x (dec y))
+        down   (g board x (inc y))
+        left   (g board (dec x) y)
+        right  (g board (inc x) y)
+        points (filterv identity [point up down left right])]
+    (and (= point
+            (when points
+              (apply min points)))
+         (< point 9))))
+
+(defn find-neighbors [board land]
   (let [width (count (first board))
         height (count board)]
-    (for [y (range height)]
-      (for [x (range width)]
-        (if (tube? board x y)
-          (swap! tubes conj (get (get board y) x)))))))
+    (partition 2 (flatten (mapv
+     (fn [line]
+       (filter
+        (fn [[x y]]
+          (tube? board x y))
+        line))
+     land)))))
+
+(defn get-holes [board points]
+  (map
+   (fn [[x y]]
+     (get (get board y) x))
+   points))
 
 (defn sum-tubes [tubes]
   (reduce
-   (fn [cnt coll]
-     (+ cnt (inc coll)))
-   0 @tubes))
+   (fn [cnt coll] (+ cnt (inc coll)))
+   0 tubes))
 
-(def tubes (atom []))
+(defn solve1 [filename]
+  (let [board (load-input filename)
+        land (create-land board)]
+    (->> land
+         (find-neighbors board)
+         (get-holes board)
+         (sum-tubes))))
 
-(find-neighbors (load-input "input.txt"))
-@tubes
-(println (sum-tubes tubes))
+(solve1 "input.txt")
