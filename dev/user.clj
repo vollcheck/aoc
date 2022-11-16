@@ -1,10 +1,4 @@
-(ns user
-  (:require [clojure.string :refer [split]]))
-
-(defn split-line
-  "Split string by new lines."
-  [s]
-  (split s #"\n"))
+(ns user)
 
 (defn parse-int
   [x]
