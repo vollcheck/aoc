@@ -4,3 +4,5 @@ tmp
 notes.org
 sample.txt
 .cpcache/
+input*.txt
+test-input*.txt
