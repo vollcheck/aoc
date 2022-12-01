@@ -1,0 +1,15 @@
+(ns y%d.day%02d
+  (:require [clojure.string :as str]
+            [core :refer [load-input]]))
+
+(defn part-1 [input]
+  )
+
+(defn part-2 [input]
+  )
+
+(comment
+  (def input (load-input :test))
+  (part-1 input)
+  (part-2 input)
+  )
