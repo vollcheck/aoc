@@ -35,20 +35,23 @@
   - :no-split - return only slurped stream, do not split by new line
   - :debug - to see passed options
   "
-  [& opts]
-  (when (in? :debug opts) (prn opts))
-  (let [[y d] (str/split (str *ns*) #".day")
-        filename (if (in? :test opts)
-                   "src/%s/input%s-test.txt"
-                   "src/%s/input%s.txt")
-        full-filename (format filename y d)]
-    (try
-      (if (in? :no-split opts)
-        (slurp full-filename)
-        ((str/split-lines (slurp full-filename))))
-      (catch java.io.FileNotFoundException _
-        (prn "no test file available. are you sure you want to load test data?")
-        :not-ok))))
+  ([] (load-input []))
+  ([& opts]
+   (when (in? :debug opts) (prn opts))
+   (let [[y d] (str/split (str *ns*) #".day")
+
+         filename (if (in? :test opts)
+                    "src/%s/input%s-test.txt"
+                    "src/%s/input%s.txt")
+         full-filename (format filename y d)]
+     (try
+       (if (in? :no-split opts)
+         (slurp full-filename)
+         (str/split-lines (slurp full-filename)))
+       (catch java.io.FileNotFoundException _
+         (prn "no test file available."
+              "are you sure you want to load test data?")
+         :not-ok)))))
 
 ;; ----
 ;; GRID
