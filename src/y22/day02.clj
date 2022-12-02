@@ -14,12 +14,8 @@
     "C Z" (+ 3 3) ;; scissors draw
     ))
 
-;; x lose
-;; y draw
-;; z win
 (defn parse-line-2 [line]
   (case line
-    ;; rock rock
     "A X" (+ 3 0) ;; lose to rock are scissors
     "A Y" (+ 1 3) ;; draw to rock is rock
     "A Z" (+ 2 6) ;; win to rock is paper
