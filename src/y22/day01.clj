@@ -1,30 +1,24 @@
 (ns y22.day01
-  (:require [clojure.string :as str]))
-
-(defn load-input []
-  (slurp "src/y22/input01.txt"))
+  (:require [clojure.string :as str]
+            [core :refer [load-input]]))
 
 (defn parse-group [group]
   (->> group
        str/split-lines
-       (map #(Integer/parseInt %))
-       (apply +)
-       ))
+       (map parse-long)
+       (apply +)))
 
 (defn part-1 [input]
   (->> (str/split input #"\n\n")
        (map parse-group)
-       (apply max)
-       ))
+       (apply max)))
 
 (defn part-2 [input]
   (->> (str/split input #"\n\n")
        (map parse-group)
        (sort >)
        (take 3)
-       (apply +)
-       ))
-
+       (apply +)))
 
 (comment
   (def input (load-input))
