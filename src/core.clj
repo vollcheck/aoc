@@ -49,8 +49,8 @@
          (slurp full-filename)
          (str/split-lines (slurp full-filename)))
        (catch java.io.FileNotFoundException _
-         (prn "no test file available."
-              "are you sure you want to load test data?")
+         (println "no test file available.\n"
+                  "are you sure you want to load test data?")
          :not-ok)))))
 
 ;; ----
@@ -86,11 +86,16 @@
 (defn transpose [m]
   (apply mapv vector m))
 
+;; ----
+;; META
+;; ----
+
 (defn new-day! [year day]
   (let [fname (format "src/y%d/day%02d.clj" year day)
-        iname (format "src/y%d/input%02d.clj" year day)
+        iname (format "src/y%d/input%02d.txt" year day)
+        tname (format "src/y%d/input%02d-test.txt" year day)
         template-content (slurp (io/resource "template.txt"))]
     (spit fname (format template-content year day))
-    (spit iname "")))
-
-(new-day! 22 3)
+    (spit iname "")
+    (spit tname ""))
+  :ok)
