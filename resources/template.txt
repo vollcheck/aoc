@@ -2,6 +2,10 @@
   (:require [clojure.string :as str]
             [core :refer [load-input]]))
 
+(let [input (load-input :test)]
+  (-> input
+      count))
+
 (defn part-1 [input]
   )
 
@@ -9,7 +13,10 @@
   )
 
 (comment
-  (def input (load-input :test))
+  (def test-input (load-input :test))
+  (def input (load-input))
+  (part-1 test-input)
   (part-1 input)
+  (part-2 test-input)
   (part-2 input)
   )
