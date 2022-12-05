@@ -2,10 +2,6 @@
   (:require [clojure.string :as str]
             [clojure.java.io :as io]))
 
-;; -------------
-;; MISCELLANEOUS
-;; -------------
-
 (defn parse-int
   [x]
   (Integer/parseInt x))
@@ -14,17 +10,25 @@
   [x]
   (Integer/parseUnsignedInt x))
 
-;; -----------
-;; COLLECTIONS
-;; -----------
+(defn split-by-space [s]
+  (str/split s #" "))
 
 (defn in?
   [e coll]
   (some #(= e %) coll))
 
-;; ---
-;; I/O
-;; ---
+(defn indexed
+  "Returns a lazy sequence of [index, item] pairs, where items come
+  from 's' and indexes count up from zero.
+  (indexed '(a b c d))  =>  ([0 a] [1 b] [2 c] [3 d])"
+  [s]
+  (map vector (iterate inc 0) s))
+
+(defn positions
+  "Returns a lazy sequence containing the positions at which pred
+   is true for items in coll."
+  [pred coll]
+  (for [[idx elt] (indexed coll) :when (pred elt)] idx))
 
 (defn load-input
   "Return data for given day using namespace that this fn
@@ -52,10 +56,6 @@
          (println "no test file available.\n"
                   "are you sure you want to load test data?")
          :not-ok)))))
-
-;; ----
-;; GRID
-;; ----
 
 (defn make-grid
   "Create two-dimension board with same-length side.
@@ -85,10 +85,6 @@
 
 (defn transpose [m]
   (apply mapv vector m))
-
-;; ----
-;; META
-;; ----
 
 (defn new-day! [year day]
   (let [fname (format "src/y%d/day%02d.clj" year day)
