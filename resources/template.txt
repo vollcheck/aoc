@@ -1,6 +1,7 @@
 (ns y%d.day%02d
   (:require [clojure.string :as str]
-            [core :refer [load-input]]))
+            [core :refer [load-input]]
+            [purity :refer [defpure]]))
 
 (let [input (load-input :test)]
   (-> input

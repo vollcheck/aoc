@@ -1,6 +1,7 @@
 (ns y22.day08
   (:require [clojure.set :as set]
-            [core :refer [load-input parse-int]]))
+            [core :refer [load-input parse-int]]
+            [purity :refer [defpure]]))
 
 (defn make-grid [in]
   (mapv #(mapv parse-int %) in))
@@ -80,11 +81,28 @@
          (flatten)
          (apply max))))
 
+(def example
+  ["30373" "25512" "65332" "33549" "35390"])
+
+;; TODO: lint it properly
+(defpure part-2-pure
+  {[example] 9} ;; 8
+  "solves part 2 of day 8 of year 2022"
+  [in]
+  (let [mtx (make-grid in)]
+    (->> (for [y (range (count mtx))]
+           (for [x (range (count (first mtx)))]
+             (scenic-score mtx x y)))
+         (flatten)
+         (apply max))))
+
 (comment
-  (def test-input (load-input :test))
+  (def test-input (load-input :test)) ;; => ["30373" "25512" "65332" "33549" "35390"]
   (def input (load-input))
   (part-1 test-input) ;; => 21
   (part-1 input) ;; => 1705
   (part-2 test-input) ;; => 8
   (part-2 input) ;; => 371200
+  (time (part-1 input)) ;; "Elapsed time: 128.27508 msecs"
+  (time (part-2 input)) ;; "Elapsed time: 169.065716 msecs"
   )
