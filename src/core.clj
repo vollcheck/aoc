@@ -100,6 +100,12 @@
                   "are you sure you want to load test data?")
          :not-ok)))))
 
+(defn gcd [x y]
+  (cond
+    (= x y) x
+    (> x y) (gcd (- x y) y)
+    :default (gcd x (- y x))))
+
 (defn make-grid
   "Create two-dimension board with same-length side.
 
@@ -123,7 +129,7 @@
   ([n value]
    (vec (repeat n (vec (repeat n value))))))
 
-(defn nth-in-grid [grid row column]
+(defn nth-grid [grid row column]
   (-> grid
       (nth row)
       (nth column)))
