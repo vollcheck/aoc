@@ -218,3 +218,11 @@
           (if (in? v visited)
             (recur new-queue visited)
             (recur new-queue (conj visited v)))))))
+
+(defn remove-ns-from-keys
+  "Probably not particularly useful in AoC, but it's a good core function."
+  [m]
+  (reduce-kv (fn [agg k v]
+               (assoc agg (-> k name keyword) v))
+             {}
+             m))
