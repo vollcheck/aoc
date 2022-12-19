@@ -1,1 +1,1 @@
-{:lint-as {purity/defpure clojure.core/defn}}
+{:hooks {:analyze-call {purity/defpure clj-kondo.aoc.purity_hook/defpure}}}
