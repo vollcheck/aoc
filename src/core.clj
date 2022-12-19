@@ -226,3 +226,11 @@
                (assoc agg (-> k name keyword) v))
              {}
              m))
+
+(defn range-1
+  "Range from 1 to infinity"
+  []
+  (iterate inc' 1))
+
+(defn diagonal [[x y]]
+  (Math/sqrt (+ (* x x) (* y y))))
