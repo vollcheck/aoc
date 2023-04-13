@@ -1,1 +1,1 @@
-{:hooks {:analyze-call {purity/defpure clj-kondo.aoc.purity_hook/defpure}}}
+{:hooks {:analyze-call {purity/defpure hooks.defpure/defpure}}}
