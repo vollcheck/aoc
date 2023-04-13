@@ -73,7 +73,7 @@
 (def max-val-idx (partial find-idx max-key))
 (def min-val-idx (partial find-idx min-key))
 
-(defn load-input
+(defn load-in
   "Return data for given day using namespace that this fn
   is being called from.
 
@@ -82,14 +82,14 @@
   - :no-split - return only slurped stream, do not split by new line
   - :debug - to see passed options
   "
-  ([] (load-input []))
+  ([] (load-in []))
   ([& opts]
    (when (in? :debug opts) (prn opts))
    (let [[y d] (str/split (str *ns*) #".day")
 
          filename (if (in? :test opts)
-                    "src/%s/input%s-test.txt"
-                    "src/%s/input%s.txt")
+                    "resources/%s/%s-test.in"
+                    "resources/%s/%s.in")
          full-filename (format filename y d)]
      (try
        (if (in? :no-split opts)
