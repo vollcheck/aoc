@@ -33,6 +33,7 @@
 
 (defn parse-line [line]
   (->>
+   ;; lookahead regex as words might overlap each other
    (re-seq #"(?=(one|two|three|four|five|six|seven|eight|nine|[0-9]))" line)
    (map #(second %))
    ((juxt first last))
