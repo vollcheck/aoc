@@ -1,0 +1,42 @@
+{:paths ["src" "resources"]
+ :tasks {:requires ([babashka.fs :as fs]
+                    [clojure.string :as str]
+                    [clojure.java.io :as io]
+                    [babashka.curl :as curl])
+         -session {:task (slurp ".session")}
+         -parse-day-args {:task (let [now (new java.util.Date)
+                                      year (.format (java.text.SimpleDateFormat. "yyyy") now)
+                                      day (.format (java.text.SimpleDateFormat. "d") now)]
+                                  (condp = (count *command-line-args*)
+                                    1 [(first *command-line-args*) year]
+                                    2 [(first *command-line-args*)
+                                       (second *command-line-args*)]
+                                    [day year]))}
+         -download-input {:task (let [[day year] (run '-parse-day-args)
+                                      path (fs/path "resources" year)
+                                      file-name (format "%02d.in" (Integer/parseInt day))
+                                      url (format "https://adventofcode.com/%s/day/%s/input" year day)
+                                      resp (curl/get url {:headers {"Cookie" (str "session=" (run '-session))
+                                                                    #_#_"User-Agent" (System/getenv "AOC_USER_AGENT")}})]
+                                  (when-not (fs/exists? path)
+                                    (fs/create-dir path))
+                                  (spit (str (fs/path path file-name)) (:body resp)))}
+         new-day {:doc "Create the next day from the template."
+                  ;; :depends [-download-input]
+                  :task (let [[day year] (run '-parse-day-args)
+                              day (format "%02d" (Integer/parseInt day))
+                              template (slurp (io/resource "template.clj"))
+                              path (fs/path "src" "y23" #_(format "y%02d" (Integer/parseInt year))) ;; TODO
+                              file-name (format "day%s.clj" day)]
+                          (println path)
+                          (println (format "Creating template for %s/%s" day year))
+
+                          ;; Create the year path if missing
+                          (when-not (fs/exists? path)
+                            (fs/create-dir path))
+
+                          (spit
+                           (str (fs/path path file-name))
+                           (-> template
+                               (str/replace (re-pattern "YEAR") year)
+                               (str/replace (re-pattern "DAY") day))))}}}
