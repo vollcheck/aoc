@@ -2,6 +2,10 @@
   (:require [clojure.string :as str]
             [clojure.java.io :as io]))
 
+(defn drop-at [at coll]
+  (into (subvec coll 0 at)
+        (subvec coll (inc at))))
+
 (defn parse-int
   [x]
   (if (char? x)
@@ -95,6 +99,7 @@
        (if (in? :no-split opts)
          (slurp full-filename)
          (str/split-lines (slurp full-filename)))
+       ;; I think raising exception would be more visible than this
        (catch java.io.FileNotFoundException _
          (println "no test file available.\n"
                   "are you sure you want to load test data?")
@@ -104,8 +109,11 @@
   (cond
     (= x y) x
     (> x y) (gcd (- x y) y)
-    :default (gcd x (- y x))))
+    :else (gcd x (- y x))))
 
+
+;; note on performance: use transients for better creation performance
+;; https://blog.redplanetlabs.com/2020/09/02/clojure-faster/
 (defn make-grid
   "Create two-dimension board with same-length side.
 
@@ -222,10 +230,11 @@
 (defn remove-ns-from-keys
   "Probably not particularly useful in AoC, but it's a good core function."
   [m]
-  (reduce-kv (fn [agg k v]
-               (assoc agg (-> k name keyword) v))
-             {}
-             m))
+  (reduce-kv
+   (fn [agg k v]
+     (assoc agg (-> k name keyword) v))
+   {}
+   m))
 
 (defn range-1
   "Range from 1 to infinity"
