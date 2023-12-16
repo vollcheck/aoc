@@ -243,3 +243,8 @@
 
 (defn diagonal [[x y]]
   (Math/sqrt (+ (* x x) (* y y))))
+
+(defn taxicab [[x1 y1] [x2 y2]]
+  (+ (abs (- x1 x2)) (abs (- y1 y2))))
+
+(def manhattan taxicab)
