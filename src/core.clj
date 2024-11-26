@@ -6,6 +6,46 @@
   (into (subvec coll 0 at)
         (subvec coll (inc at))))
 
+;; alias
+(def drop-at-v drop-at)
+
+(defn vcontains?
+  "checks whether a seq contains an element k"
+  [coll k]
+  (some #(= % k) coll))
+
+(comment
+  ;; tests
+  (do
+    (assert (vcontains? [:B :D :A] :B))
+    (assert (not (vcontains? [:B :D :A] :C))))
+  )
+
+(defn subvec?
+  "make sure all elements from subv are present in v"
+  [v subv]
+  (every? (partial vcontains? v) subv))
+
+(comment
+  ;;tests
+  (do
+    (assert (subvec? [:B :D :F :A] [:B :D :F]))
+    (assert (not (subvec? [:B :D] [:B :D :F])))
+    )
+  )
+
+(defn disjv
+  "remove item k from coll"
+  [k coll]
+  ;; NOTE: might be faster
+  ;; TODO: might also have args other way around
+  (remove #(= % k) coll))
+
+(comment
+  ;; tests
+  (assert (= (disjv :C [:A :B :C]) [:A :B]))
+  )
+
 (defn parse-int
   [x]
   (if (char? x)
@@ -247,4 +287,5 @@
 (defn taxicab [[x1 y1] [x2 y2]]
   (+ (abs (- x1 x2)) (abs (- y1 y2))))
 
+;; alias
 (def manhattan taxicab)

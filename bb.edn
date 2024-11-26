@@ -12,7 +12,8 @@
                                     2 [(first *command-line-args*)
                                        (second *command-line-args*)]
                                     [day year]))}
-         -download-input {:task (let [[day year] (run '-parse-day-args)
+         download-input {:doc "Download input for particular day and year (current if not specified)"
+                         :task (let [[day year] (run '-parse-day-args)
                                       path (fs/path "resources" year)
                                       file-name (format "%02d.in" (Integer/parseInt day))
                                       url (format "https://adventofcode.com/%s/day/%s/input" year day)

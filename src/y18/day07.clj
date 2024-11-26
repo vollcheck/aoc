@@ -1,6 +1,8 @@
 (ns y18.day07
   (:require [clojure.set :as set]
-            [core :refer [load-in]]))
+            [core :refer [disjv load-in split-by subvec? vcontains?]]))
+
+(def ^:dynamic *debug* false)
 
 (def line-rex
   #"Step (\w) must be finished before step (\w) can begin.")
@@ -8,7 +10,7 @@
 (defn parse-line [line]
   (let [[_ a b] (re-matches line-rex line)]
     ;; it means that B is dependent on A
-    (mapv keyword [a b])))
+    [(keyword a) (keyword b)]))
 
 (defn find-starting-points [data]
   (let [ks (set (mapv first data))
@@ -24,35 +26,23 @@
    {}
    data))
 
-(def sort-fn (comp first name))
-
-(defn vcontains?
-  "checks whether a seq contains an element k"
-  [coll k]
-  (some #(= % k) coll))
+(def sort-alphabetically (comp first name))
 
 (defn prereqs
   "collects all keys that k is within it's dependents
   in other word get all keys where k is within vs"
   [graph k]
-  (->> graph
-       (filter #(vcontains? (second %) k))
-       (map first)
-       (into [])))
+  (into []
+        (comp
+         (filter #(vcontains? (second %) k))
+         (map first))
+        graph))
 
-(defn subvec?
-  "make sure all elements from subv are present in v"
-  [v subv]
-  (every? (partial vcontains? v) subv))
-
-(defn done-prereqs? [graph done k]
+(defn done-prereqs?
+  "checks whether k has all dependencies in done collection so that means all of k's prerequisites are done"
+  [graph done k]
   (let [pre (prereqs graph k)]
     (subvec? done pre)))
-
-(defn vc-disj
-  "remove item k from coll"
-  [k coll]
-  (remove #(= % k) coll))
 
 (defn walk-graph [graph]
   (loop [done []
@@ -61,9 +51,9 @@
       (apply str (map name done))
       (let [head (->> todos
                       (filter (partial done-prereqs? graph done))
-                      (sort-by sort-fn)
+                      (sort-by sort-alphabetically)
                       first)
-            rest-todos (vc-disj head todos)
+            rest-todos (disjv head todos)
             deps (get graph head)]
         (if (nil? head)
           "somethings wrong!" ;; not needed really
@@ -71,25 +61,24 @@
                  ;; set?
                  (set (apply conj rest-todos deps))))))))
 
-;; precompute is faster?
 (def char-times
   (->> (for [c (range 61 87)
+             ;; magic number 4: we need to start from 61 which is \A in the code
+             ;; \A int is 65, so 61+4=65
              :let [letter (keyword (str (char (+ c 4))))]]
          [letter c])
        (into {})))
 
-
-;; TODO: put that in the std lib
-(defn update-vals [m f]
-  (into {} (map (fn [[k v]] [k (f v)]) m)))
-
 (def initial-workers
-  (for [x (range 1 6)]
-    {:id x
-     :t 0
-     :k nil}))
+  (->> (for [x (range 1 6)]
+         {:id x
+          :t 0
+          :k nil})
+       (into [])))
 
-(defn dec-to-zero [x]
+(defn dec-to-zero
+  "decrement value, but stop on 0"
+  [x]
   (max (dec x) 0))
 
 (defn walk-graph-2 [graph]
@@ -97,77 +86,81 @@
          time 0
          done []
          todos (find-starting-points graph)]
-    (if (empty? todos) ;; add max time to left and current time
+    (if (and (empty? todos)
+             (every? #(nil? (:k %)) workers))
       (->> (map :t workers)
            (apply max)
-           (+ time))
+           (+ time)
+           dec) ;; because we had no more work to do so no need to inc at the end
 
-      (let [free-workers (filter #(= 0 (:t %)) workers)
-            cnt (count free-workers)
+      ;; TODO: optimization idea - if there's no more todos, then you can short-cicuit on busy workers by just subtracting
+      ;; the max time of all busy workers
 
-            done-from-workers (map :k free-workers)
-            new-done (apply conj done done-from-workers)
+      (let [[free-workers busy-workers] (split-by #(= 0 (:t %)) workers)
+            cnt (count free-workers)]
 
-            deps-from-done (set (mapcat #(get graph %) done-from-workers))
+        ;; every worker busy, we can short-circuit on smaller value
+        (if (= cnt 0)
+          (let [min-t (apply min (map :t workers))
+                new-workers (map (fn [w] (update w :t #(- % min-t))) workers)]
+            (recur new-workers
+                   (+ time min-t)
+                   done
+                   todos))
 
-            ready-todos (->> todos
-                             (filter (partial done-prereqs? graph done))
-                             (sort-by sort-fn))
+          (let [letters-done (keep :k free-workers)
 
-            todos-to-pick (take cnt ready-todos)
+                ;; put nil as a key for all free workers
+                free-workers (map #(update % :k (constantly nil)) free-workers)
 
-            todos-left    (set (apply conj
-                                      (drop cnt ready-todos)
-                                      deps-from-done))
+                ;; with addition of letters done
+                all-done (set (apply conj done letters-done))
 
-            new-workers (map
-                         (fn [{:keys [id t k]} ch]
-                           (let [ch (keyword (str ch))]
-                             {:id id
-                              t (get char-times ch)
-                              k ch}))
-                         free-workers
-                         todos-to-pick)
-            ;; TODO
-            ;; problem here is with keeping the count of workers!!!
-            new-workers (->>
-                         workers
-                         (remove #(= 0 (:t %)))
-                         (merge new-workers))
-            _ (clojure.pprint/pprint new-workers)
-            new-workers (map (fn [w] (update w :t dec-to-zero)) new-workers)]
-        (recur new-workers
-               inc
-               new-done
-               todos-left)))))
+                ;; with addition of letters done dep
+                all-todos (->> (mapcat #(get graph %) letters-done)
+                               (apply conj todos)
+                               set)
 
-(map
- (fn [{:keys [id t k]} ch]
-   (let [ch (keyword (str ch))]
-     {:id id
-      t (get char-times ch)
-      k ch}))
- initial-workers
- [\A \B \C]
- )
+                picked-todos (->> all-todos
+                                  (filter (partial done-prereqs? graph all-done))
+                                  (sort-by sort-alphabetically)
+                                  (take cnt))
 
+                all-todos (remove #(vcontains? picked-todos %) all-todos)
+
+                picked-todos-count (count picked-todos)
+                [workers-to-engage workers-unemployed] (split-at picked-todos-count free-workers)
+
+                newly-engaged-workers (map
+                                       (fn [{:keys [id]} ch]
+                                         {:id id
+                                          :t (get char-times ch)
+                                          :k ch})
+                                       workers-to-engage
+                                       picked-todos)
+
+                new-workers (->> (concat busy-workers newly-engaged-workers workers-unemployed)
+                                 (map (fn [w] (update w :t dec-to-zero))))]
+            (if *debug*
+              (println "new workers" new-workers))
+            (recur new-workers
+                   (inc time)
+                   all-done
+                   all-todos)))))))
+
+(defn solve [input solve-fn]
+  (->> input
+       (mapv parse-line)
+       to-graph
+       solve-fn))
 
 (defn part-1 [input]
-  (->> input
-       (mapv parse-line)
-       to-graph
-       walk-graph))
+  (solve input walk-graph))
 
 (defn part-2 [input]
-  (->> input
-       (mapv parse-line)
-       to-graph
-       walk-graph-2))
-
+  (solve input walk-graph-2))
 
 (comment
-
-
   (def test-data
     (->> (load-in :test)
          (mapv parse-line)))
@@ -178,62 +171,22 @@
   ;; => "CABDFE"
 
   (part-2 (load-in :test))
+  ;; => 254
 
-
-  (time-for \A)
-  (time-for \Z)
-  (int \A)
 
   (part-1 (load-in))
-   ;; => "BETUFNVADWGPLRJOHMXKZQCISY"
-  ;; => "BEUVADNTFWGPLRJOHMXKZQCISY"
-  ;; versus
-  (= "BETUFNVADWGPLRJOHMXKZQCISY" ;; python solution
-     "BETUFNVADWGPLRJOHMXKZQCISY")
+  ;; => "BETUFNVADWGPLRJOHMXKZQCISY"
 
-  (def l (load-in))
-  (def gg (->> (mapv parse-line l)
-               data2graph))
-  (count gg)
-
-  (count (set (mapcat conj (mapv second gg))))
-  (count (find-starting-points gg))
-  (->> (find-starting-points gg)
-       (sort-by sort-fn)
-       first)
-
-  (into [] )
-  (walk-graph gg)
-  ;; => "LMIROAFWQPDBJZTCEGYXHVUSNK"
-
-  (find-starting-point gg)
-  ;; => Execution error (IllegalArgumentException) at y18.day07/data2graph (REPL:39).
-  ;;    Don't know how to create ISeq from: clojure.lang.Keyword
-
-  ;; TESTS
-  (to-graph test-data)
-  ;; => {:C [:A :F], :A [:B :D], :B [:E], :D [:E], :F [:E]}
+  (part-2 (load-in))
+  ;; => 848
 
   (def graph (to-graph test-data))
   graph
   ;; => {:C [:A :F], :A [:B :D], :B [:E], :D [:E], :F [:E]}
 
-  (sort-by sort-fn [:c :b :a])
+  (sort-by sort-alphabetically [:c :b :a])
   ;; => (:a :b :c)
-
-  (vcontains? [:B :D :A] :B) ;; true
-  (vcontains? [:B :D :A] :C) ;; nil
 
   (prereqs graph :E)
   ;; => [:B :D :F]
-
-  (subvec? [:B :D :F :A] [:B :D :F]) ;; true
-  (subvec? [:B :D] [:B :D :F]) ;; false
-
-
-  (walk-graph graph)
-  ;; => "CABDFE"
-
-
-
   )
