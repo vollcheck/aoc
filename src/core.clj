@@ -1,6 +1,7 @@
 (ns core
   (:require [clojure.string :as str]
-            [clojure.java.io :as io]))
+            [clojure.java.io :as io])
+  (:import [java.util.concurrent Callable Executors Future ExecutorService]))
 
 (defn drop-at [at coll]
   (into (subvec coll 0 at)
@@ -289,3 +290,22 @@
 
 ;; alias
 (def manhattan taxicab)
+
+(defn parallel-process
+  "It takes in a sequence of elements (in-seq),
+  function to apply on these input elements (process-fn)
+  and a number of threads.
+
+  Note that it would be best to have number of threads in between
+  your number of cores and number of cores + 2.
+  For determining your number of cores you can evaluate:
+  (.availableProcessors (Runtime/getRuntime))
+  "
+  [in-seq process-fn thread-count]
+  (let [executor (Executors/newFixedThreadPool thread-count)
+        futures (.invokeAll executor
+                            (map #(reify Callable
+                                    (call [_] (process-fn %)))
+                                 in-seq))]
+    (.shutdown executor)
+    (map #(.get %) futures)))
