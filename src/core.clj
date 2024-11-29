@@ -301,11 +301,11 @@
   For determining your number of cores you can evaluate:
   (.availableProcessors (Runtime/getRuntime))
   "
-  [in-seq process-fn thread-count]
+  [process-fn thread-count coll]
   (let [executor (Executors/newFixedThreadPool thread-count)
         futures (.invokeAll executor
                             (map #(reify Callable
                                     (call [_] (process-fn %)))
-                                 in-seq))]
+                                 coll))]
     (.shutdown executor)
     (map #(.get %) futures)))

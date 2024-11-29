@@ -2,17 +2,11 @@
   (:require [clojure.string :as str]
             [core :refer [parallel-process parse-int]]))
 
-
-;; this is one of the slowest days - find an option to make it faster!
-
 (def ^:dynamic *serial* 7511)
 
 (def width 300)
 (def height 300)
 
-;; !!!
-;; NOTE: they started with index 1, not 0!
-;; !!!
 
 (defn get-power [x y]
   (let [rack (+ x 10)]
@@ -29,6 +23,9 @@
 
 (defn generate-grid []
   (->> (for [y (range 1 (inc height))]
+         ;; !!!
+         ;; NOTE: they started with index 1, not 0!
+         ;; !!!
          (into [] (for [x (range 1 (inc width))]
                     (get-power x y))))
        (into [])))
