@@ -1,74 +1,53 @@
 (ns y24.day02
   (:require [clojure.string :as str]
-            [core :refer [load-in]]))
-
+            [core :refer [drop-at load-in]]))
 
 (defn parse-line [line]
-  (let [difs (->> (re-seq #"\d+" line)
-                  (map parse-long)
-                  (partition 2 1) ;; transducer
-                  (map (fn [[x y]] (- x y))))]
-    (cond
-      (and (every? #(> 0 %) difs)
-           (every? #(<= -3 % -1) difs))
-      true
+  (->> (re-seq #"\d+" line)
+       (mapv parse-long)))
 
-      (and (every? #(< 0 %) difs)
-           (every? #(<= 1 % 3) difs))
-      true
+(defn safe-line? [line]
+  (let [neg-tend (< (- (first line)
+                       (second line))
+                    0)]
+    (->> line
+         (partition 2 1)
+         (map (fn [[x y]] (- x y)))
+         (every? #(if neg-tend
+                    (<= -3 % -1)
+                    (<= 1 % 3))))))
 
-      :else false)
-    #_difs))
+(defn part-1 [in]
+  (->> in
+       (map (comp safe-line? parse-line))
+       (filter identity)
+       count))
 
-(->> (load-in :test)
-     ;; first
-     ;; parse-line
-     (map parse-line)
-     (filter identity)
-     count)
- ;; => 2
- ;; => (1 2 2 1)
+;; NOTE: not optimized - combinatorics
+(defn safe-with-removing? [line]
+  (let [cnt (count line)]
+    (->> (for [i (range cnt)]
+           (drop-at i line))
+         (some safe-line?))))
 
-(->> (load-in)
-     (map parse-line)
-     (filter identity)
-     count)
- ;; => 572
+(defn part-2 [in]
+  (->> in
+       (map parse-line)
+       (map #(or (safe-line? %)
+                 (safe-with-removing? %)))
+       (filter identity)
+       count))
 
+(comment
+  (def intest  (load-in :test))
+  (def in (load-in))
+  (part-1 intest)
+  ;; => 2
+  (part-1 in)
+  ;; => 572
 
-(defn parse-line-2 [line]
-  (let [difs (->> (re-seq #"\d+" line)
-                  (map parse-long)
-                  (partition 2 1) ;; transducer
-                  (map (fn [[x y]] (- x y))))
-        cd (count difs)
-        cm (count (filter #(> 0 %) difs))
-        cp (count (filter #(< 0 %) difs))
-        res (cond
-              ;; if there's more minuses
-              (> cm cp)
-              ;; is there
-              (>= 1
-                  (- cd
-                     (count (filter #(<= -3 % -1) difs))))
-
-              (< cm cp)
-              ;; is there
-              (>= 1
-                  (- cd
-                     (count (filter #(<= 1 % 3) difs))))
-
-              :else false)]
-    (println difs cd cm cp res)
-    res
-    ))
-
-(->> (nth (load-in :test) 1)
-     parse-line-2
-     )
-
-(->> (load-in :test)
-     (map parse-line-2)
-     (filter identity)
-     count)
- ;; => 988
+  (part-2 intest)
+  ;; => 4
+  (part-2 in)
+  ;; => 612
+  )

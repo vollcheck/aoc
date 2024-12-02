@@ -4,8 +4,10 @@
   (:import [java.util.concurrent Callable Executors Future ExecutorService]))
 
 (defn drop-at [at coll]
-  (into (subvec coll 0 at)
-        (subvec coll (inc at))))
+  (if (vector? coll)
+    (into (subvec coll 0 at)
+          (subvec coll (inc at)))
+    (drop-at at (into [] coll))))
 
 ;; alias
 (def drop-at-v drop-at)
