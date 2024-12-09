@@ -6,3 +6,6 @@ sample.txt
 .cpcache/
 input*.txt
 test-input*.txt
+
+# v2
+*.in

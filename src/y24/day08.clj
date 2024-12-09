@@ -35,18 +35,16 @@
         newx (- (* 2 bx) x)
         newy (- (* 2 by) y)]
     (when (and (< -1 newx maxx)
-               (< -1 newy maxy)
-               ;; put it only if it's a free spot
-               #_(= \. (get2 grid newx newy)))
+               (< -1 newy maxy))
       [newx newy])))
 
 (comment
-  (mirrored ["...."
-             "...."
-             ".A.."
-             "A..."]
-            [0 3] [1 2])
-  ;; => [2 1]
+  (mirrored-long ["...."
+                  "...."
+                  ".A.."
+                  "A..."]
+                 [0 3] [1 2])
+  ;; => ([2 1] [3 3])
   )
 
 (defn combo-group [grid group]
@@ -69,12 +67,6 @@
    []
    objs))
 
-;; NOTE: just for debugging purposes, might be a part of core namespace
-(defn assoc-in-vec-str [grid x y v]
-  (let [row (into [] (nth grid y))
-        newrow (apply str (assoc row x v))]
-    (assoc grid y newrow)))
-
 (defn part-1 [in]
   (->> (find-all-objects in)
        (combo-all-groups in)
@@ -82,77 +74,96 @@
        count
        ))
 
+(defn range-from
+  "Same as `range` but with dictated start and infinite end"
+  [from]
+  (iterate inc' from))
+
 (defn mirrored-long
   "For x and y in grid find the mirrored object to middle point "
   [grid [x y] [bx by]]
   (let [maxx (count (first grid))
         maxy (count grid)
-        newx (- (* 2 bx) x)
-        newy (- (* 2 by) y)]
-    (when (and (< -1 newx maxx)
-               (< -1 newy maxy))
+        basex (- (* 2 bx) x)
+        basey (- (* 2 by) y)
+        stepx (- bx x)
+        stepy (- by y)]
+    (for [factor (range)
+          :let [newx (+ basex (* factor stepx))
+                newy (+ basey (* factor stepy))]
+          :while (and (< -1 newx maxx)
+                      (< -1 newy maxy))]
       [newx newy])))
 
-;; TODO: fix mirrored long, use `for` and `:while` check until [newx newy] fits into the grid
-;; TODO: change counting antinodes to include starting antennes as well
-
-(defn part-2 [in]
-  (let [objects (find-all-objects in)
-        combined (combo-all-groups in objects)]
-    ))
-
-
-  (->> (find-all-objects in)
-       (combo-all-groups in)
-       set
-       count
-       ))
-
-
 (comment
-  (def intest (load-in :test))
-  (def objs (find-all-objects intest))
-  (def res (set (combo-all-groups intest objs)))
-  (count res)
+  (def g ["...."
+          "...."
+          ".A.."
+          "A..."])
+  (->> (mirrored-long g [0 3] [1 2])
+       (debug-points g))
+  ["...#"
+   "..#."
+   ".A.."
+   "A..."]
+  ;; => ([2 1] [3 0])
+  ;; => ([2 1] [3 2])
+  ;; => ([2 1] [3 2])
+  )
 
-  (def in (load-in))
-  (part-1 in)
+;; NOTE: just for debugging purposes, might be a part of core namespace
+(defn assoc-in-vec-str [grid x y v]
+  (let [row (into [] (nth grid y))
+        newrow (apply str (assoc row x v))]
+    (assoc grid y newrow)))
 
-   ;; => 381
-  res
-  ;; => #{nil
-  ;;      [7 7]
-  ;;      [2 3]
-  ;;      [11 0]
-  ;;      [4 2]
-  ;;      [10 2]
-  ;;      [10 11]
-  ;;      [1 5]
-  ;;      [0 7]
-  ;;      [3 6]
-  ;;      [10 10]
-  ;;      [3 1]
-  ;;      [9 4]
-  ;;      [6 0]}
-
+(defn debug-points [grid points]
   (reduce
    (fn [g [x y]]
      (if (and x y)
        (assoc-in-vec-str g x y \#)
        g))
-   intest
-   res)
-  ;; => ["......#....#"
-  ;;     "...#....0..."
-  ;;     "....#0....#."
-  ;;     "..#....0...."
-  ;;     "....0....#.."
-  ;;     ".#....A....."
-  ;;     "...#........"
-  ;;     "#......#...."
-  ;;     "........A..."
-  ;;     ".........A.."
-  ;;     "..........#."
-  ;;     "..........#."]
+   grid
+   points))
 
+(defn combo-all-groups-2 [grid objs]
+  (let [apc (partial apply conj)]
+    (reduce
+     (fn [acc [_sign group]]
+       (let [pairs (combo/combinations group 2)
+             f (partial mirrored-long grid)
+             result-pairs (reduce
+                           (fn [acc [p1 p2]]
+                             (let [r1 (f p1 p2)
+                                   r2 (f p2 p1)]
+                               (cond-> acc
+                                 r1 (apc r1)
+                                 r2 (apc r2))))
+                           ;; put all objects from group as an initial value
+                           ;; they cound as antinodes as well!
+                           (into [] group)
+                           pairs)]
+         (apc acc result-pairs)))
+     []
+     objs)))
+
+(defn part-2 [in]
+  (->> (find-all-objects in)
+       (combo-all-groups-2 in)
+       set
+       count))
+
+(comment
+  (def intest (load-in :test))
+  (def in (load-in))
+
+  (part-1 intest)
+  ;; => 14
+  (part-1 in)
+  ;; => 381
+
+  (part-2 intest)
+  ;; => 34
+  (part-2 in)
+  ;; => 1184
   )
