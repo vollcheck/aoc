@@ -311,11 +311,15 @@
 ;; grid operations
 
 (defn get2
-  ([grid point] (get2 grid (first point) (second point)))
+  ([grid point]
+   (-> (nth grid (second point))
+       (nth (first point))))
   ([grid x y]
    (-> (nth grid y)
        (nth x))))
 
+;; TODO: handy to have multiple cell-values, when you want to look many things at once
+;;       and group the points by it
 (defn find-cells [grid cell-value]
   (let [cols (count grid)
         rows (count (first grid))]
