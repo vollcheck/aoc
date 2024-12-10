@@ -178,7 +178,9 @@
   ([n]
    (vec (repeat n (vec (repeat n 0)))))
   ([n value]
-   (vec (repeat n (vec (repeat n value))))))
+   (vec (repeat n (vec (repeat n value)))))
+  ([x y value]
+   (vec (repeat y (vec (repeat x value))))))
 
 (defn nth-grid [grid row column]
   (-> grid
@@ -187,16 +189,6 @@
 
 (defn transpose [m]
   (apply mapv vector m))
-
-(defn new-day! [year day]
-  (let [fname (format "src/y%d/day%02d.clj" year day)
-        iname (format "src/y%d/input%02d.txt" year day)
-        tname (format "src/y%d/input%02d-test.txt" year day)
-        template-content (slurp (io/resource "template.txt"))]
-    (spit fname (format template-content year day))
-    (spit iname "")
-    (spit tname ""))
-  :ok)
 
 (def ^:private inf (Long/MAX_VALUE))
 
@@ -270,6 +262,10 @@
             (recur new-queue visited)
             (recur new-queue (conj visited v)))))))
 
+;; TODO: handle mutliple arguments
+(defn ->queue [x]
+  (conj clojure.lang.PersistentQueue/EMPTY x))
+
 (defn remove-ns-from-keys
   "Probably not particularly useful in AoC, but it's a good core function."
   [m]
@@ -311,3 +307,19 @@
                                  coll))]
     (.shutdown executor)
     (map #(.get %) futures)))
+
+;; grid operations
+
+(defn get2
+  ([grid point] (get2 grid (first point) (second point)))
+  ([grid x y]
+   (-> (nth grid y)
+       (nth x))))
+
+(defn find-cells [grid cell-value]
+  (let [cols (count grid)
+        rows (count (first grid))]
+    (for [y (range cols)
+          x (range rows)
+          :when (= cell-value (get2 grid x y))]
+      [x y])))
