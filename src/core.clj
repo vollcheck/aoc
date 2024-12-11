@@ -348,3 +348,12 @@
           x (range rows)
           :when (= cell-value (get2 grid x y))]
       [x y])))
+
+(defn split-number-in-half
+  [number]
+  (let [len (.length ^String (str number))
+        half (/ len 2)
+        _ (assert (even? half) "Cannot split number in half!")
+        power (Math/pow 10 half)]
+    [(int (quot number power))
+     (int (rem number power))]))
