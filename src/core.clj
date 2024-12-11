@@ -59,6 +59,9 @@
   [x]
   (Integer/parseUnsignedInt x))
 
+(defn parse-numbers [line]
+  (map parse-long (re-seq #"\d+" line)))
+
 (defn split-by-space [s]
   (str/split s #" "))
 
@@ -307,6 +310,24 @@
                                  coll))]
     (.shutdown executor)
     (map #(.get %) futures)))
+
+(defn interleave-all
+  "Same for `interleave` but exhausts both collections even if they have different lengths."
+  [c1 c2]
+  (lazy-seq
+   (let [s1 (seq c1) s2 (seq c2)]
+     (cond
+       (and s1 s2)
+       (cons (first s1) (cons (first s2)
+                              (interleave-all (rest s1) (rest s2))))
+
+       s1 (cons (first s1) (rest s1))
+       s2 (cons (first s2) (rest s2))))))
+
+(comment
+  (interleave-all '((1)) [[3] [4] [5]])
+  ;; => ((1) [3] [4] [5])
+  )
 
 ;; grid operations
 
