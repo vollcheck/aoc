@@ -1,5 +1,5 @@
 (ns y24.day12
-  (:require [core :refer [get2 load-in ->queue]]))
+  (:require [core :refer [get2 load-in ->queue third]]))
 
 (defn pin
   "Turn into vec of vecs for easier lookup"
@@ -110,6 +110,24 @@
 ;; and then merge them into groups if there are many points looking to
 ;; the same side and with same X or Y coordinate
 
+
+
+(defn collect-small-changes
+
+  [coords]
+  (let [dir-fn (case (ffirst coords)
+                 (:east :west) third
+                 (:north :south) second)
+        ns (sort (map dir-fn coords))]
+    (->> (partition 2 1 ns)
+         (reduce
+            (fn [acc [a b]]
+              (if (= 1 (- b a))
+                (conj (pop acc) (conj (peek acc) b))
+                (conj acc [b])))
+            [[(first ns)]])
+         count)))
+
 (defn number-of-sides [grid group]
   (let [maxx (count (first grid))
         maxy (count grid)
@@ -117,62 +135,33 @@
     (->> group
          (reduce
           (fn [acc [x y]]
-            (let [boundaries-with-faces (->>
-                                         (for [[face dx dy] [[:east -1 0]
-                                                             [:west 1 0]
-                                                             [:south 0 -1]
-                                                             [:north 0 1]]
-                                               :let [nx (+ x dx)
-                                                     ny (+ y dy)]]
-                                           (if (or (< -1 nx maxx)
-                                                   (< -1 ny maxy)
-                                                   (not= letter (get2 grid nx ny)))
-                                             [face nx ny]))
-                                         set
-                                         (remove #(group (drop 1 %))))]
-              (apply conj acc boundaries-with-faces)))
+            (->> (for [[face dx dy] [[:east -1 0]
+                                     [:west 1 0]
+                                     [:south 0 -1]
+                                     [:north 0 1]]
+                       :let [nx (+ x dx)
+                             ny (+ y dy)]]
+                   (if (or (< -1 nx maxx)
+                           (< -1 ny maxy)
+                           (not= letter (get2 grid nx ny)))
+                     [face nx ny]))
+                 set
+                 (remove #(group (drop 1 %)))
+                 (apply conj acc)))
           [])
-         (group-by first)
          (reduce
-          (fn [acc [side-face group]]
-            (->> group
-                 ;; this is the BUG: we can have multiple boundaries in the same column or row
-                 (group-by (fn [[face x y]]
-                             (case face
-                               (:east :west) x
-                               (:north :south) y)))
-                 count
-                 (+ acc)))
+          (fn [ret [face x y]]
+            (let [field (case face
+                          (:east :west) x
+                          (:north :south) y)]
+              (assoc ret [face field] (conj (get ret [face field] []) [face x y]))))
+          {})
+         (transduce
+          (map (comp collect-small-changes second))
+          +
           0))))
 
 (comment
-  (let [in (pin intest2)]
-    (->> (get-all-letters in)
-         :groups
-         (map (partial number-of-sides in))
-         ))
-
-
-  (def east-side [[:east 1 2] [:east 2 3] [:east 1 1]])
-  (def xpos 1)
-  (def ypos 2)
-  (def sides {:east  [[:east 1 2] [:east 2 3] [:east 1 1]],
-              :north [[:north 2 3] [:north 3 4]],
-              :west  [[:west 4 3] [:west 3 1] [:west 4 2]],
-              :south [[:south 2 0] [:south 3 1]]})
-
-  ;; intest2
-  (* 4 4)
-  ;; => 16
-  ;; so 420 we expect to have from OS
-  (solve number-of-sides intest2)
-  (- 268 16)
-  252
-  (->> (first (drop 2 os))
-       (number-of-sides (pin intest2))
-       )
-
-
 
   ;; part 1
   (solve perimeter intest1)
@@ -194,11 +183,15 @@
   ;; => 268
 
   ;; we expect 236
-  (solve number-of-sides intest2)
+  (solve number-of-sides intest3)
+   ;; => 236
   ;; we expect 386
-  (solve number-of-sides intest2)
+  (solve number-of-sides intest4)
+   ;; => 368
 
   ;; we expect 1206
   (solve number-of-sides (load-in :test))
+   ;; => 1206
   (solve number-of-sides (load-in))
+   ;; => 870202
   )
