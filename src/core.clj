@@ -185,10 +185,8 @@
   ([x y value]
    (vec (repeat y (vec (repeat x value))))))
 
-(defn nth-grid [grid row column]
-  (-> grid
-      (nth row)
-      (nth column)))
+(defn third [x]
+  (first (next (next x))))
 
 (defn transpose [m]
   (apply mapv vector m))
