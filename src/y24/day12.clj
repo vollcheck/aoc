@@ -47,7 +47,6 @@
                      (= letter (get2 grid nx ny)))]
       [nx ny])))
 
-
 (defn get-region [grid letter starting-point]
   (loop [letters #{starting-point}
          q (->queue starting-point)]
