@@ -37,15 +37,47 @@
        (mapv shift-line)
        compute-load))
 
+(defn do-cycle [direction grid]
+  grid)
+
+(comment
+  (reduce
+   (fn [a _] (inc a))
+   0
+   (range 1000000000))
+  (take 10 (iterate inc 1)) ;; better reduce?
+  )
+
 (defn part-2 [lines]
   (->> (transpose-s lines)
        ) ;; NORTH, WEST, SOUTH, EAST
   ;; north load after 1000000000 cycles
   )
 
+(defn transpose [m]
+  (apply mapv vector m))
+(defn rtranspose [m]
+  (apply mapv vector (reverse m)))
+
+(defn rtranspose2 [m]
+  (into [] (reverse (apply mapv vector m))))
+
+(rtranspose2 [[1 2]
+              [3 4]])
+
+(transpose [[1 2]
+            [3 4]])
+[[1 3]
+ [2 4]]
+
+(rtranspose [[1 2]
+             [3 4]])
+[[3 1]
+ [4 2]]
+
 (comment
   (def tlines (load-in :test))
-  (def lines (load-in)) ;; TODO :not-ok
+  (def lines (load-in))
 
   (part-1 tlines)
    ;; => 136
